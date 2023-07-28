@@ -1,0 +1,65 @@
+{
+	"name": "sqs-boost",
+	"version": "0.0.1",
+	"description": "Utilities for aws-sdk-v3 SQS client that provide better typescript support and APIs for scalable usage.",
+	"main": "./dist-cjs/index.js",
+	"module": "./dist-es/index.js",
+	"types": "./dist-types/index.d.ts",
+	"files": [
+		"dist-*/**"
+	],
+	"sideEffects": false,
+	"scripts": {
+		"check": "tsc --noEmit",
+		"build": "concurrently 'npm:build:cjs' 'npm:build:es' 'npm:build:types'",
+		"build:cjs": "tsc -p tsconfig.cjs.json",
+		"build:es": "tsc -p tsconfig.es.json",
+		"build:types": "tsc -p tsconfig.types.json",
+		"test": "jest",
+		"patch": "npm version patch && npm publish",
+		"cdk": "cdk"
+	},
+	"devDependencies": {
+		"@aws-sdk/client-sqs": "^3.370.0",
+		"@types/aws-lambda": "^8.10.108",
+		"@types/jest": "^29.5.3",
+		"@types/node": "^18.11.5",
+		"aws-cdk": "^2.88.0",
+		"aws-cdk-lib": "^2.88.0",
+		"aws-lambda": "^1.0.7",
+		"concurrently": "^8.2.0",
+		"constructs": "^10.2.69",
+		"jest": "^29.6.1",
+		"rimraf": "^5.0.1",
+		"sqs-mock": "^0.0.8",
+		"ts-jest": "^29.1.1",
+		"ts-node": "^10.9.1",
+		"ts-toolbelt": "^9.6.0",
+		"tslint": "^5.20.1",
+		"tslint-config-prettier": "^1.18.0",
+		"tslint-plugin-prettier": "^2.1.0",
+		"typescript": "^5.1.6"
+	},
+	"peerDependencies": {
+		"@aws-sdk/client-sqs": "^3.370.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/visionsofparadise/sqs-boost.git"
+	},
+	"keywords": [
+		"sqs",
+		"aws-sdk",
+		"aws-sdk-v3",
+		"typescript"
+	],
+	"author": {
+		"name": "xKore",
+		"url": "https://www.mattcavender.com"
+	},
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/visionsofparadise/sqs-boost/issues"
+	},
+	"homepage": "https://github.com/visionsofparadise/sqs-boost#readme"
+}

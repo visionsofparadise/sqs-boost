@@ -1,0 +1,10 @@
+{
+   "extends": "./tsconfig.json",
+   "compilerOptions": {
+      "declaration": true,
+      "emitDeclarationOnly": true,
+      "removeComments": false,
+      "outDir": "dist-types"
+   },
+   "exclude": ["dist-cjs/*", "dist-es/*", "dist-types/*", "node_modules", "src/**/*.test.ts"]
+}
