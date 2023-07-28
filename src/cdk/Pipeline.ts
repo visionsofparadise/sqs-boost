@@ -59,7 +59,9 @@ export class SQSBoostPipelineStack extends Stack {
 			input: source,
 			commands: [
 				'npm ci',
-				'npm run build',
+				'npm run build:cjs',
+				'npm run build:es',
+				'npm run build:types',
 				'npm config set //registry.npmjs.org/:_authToken ${NPM_TOKEN}',
 				'npm run patch'
 			],
