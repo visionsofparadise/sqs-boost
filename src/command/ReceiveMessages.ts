@@ -14,7 +14,10 @@ export interface SqsbReceiveMessagesCommandOutput<Attributes extends object = ob
 	extends LowerCaseObjectKeys<Omit<ReceiveMessageCommandOutput, '$metadata' | 'Messages'>> {
 	$metadatas: Array<ReceiveMessageCommandOutput['$metadata']>;
 	messages: Array<
-		LowerCaseObjectKeys<Omit<Message, 'Body' | 'MD5OfMessageBody' | 'MD5OfMessageAttributes'>> & {
+		LowerCaseObjectKeys<
+			Required<Pick<Message, 'MessageId' | 'ReceiptHandle'>> &
+				Omit<Message, 'MessageId' | 'ReceiptHandle' | 'Body' | 'MD5OfBody' | 'MD5OfMessageAttributes'>
+		> & {
 			body: Attributes;
 			md5: string;
 			md5OfMessageAttributes?: string;
@@ -44,18 +47,26 @@ export class SqsbReceiveMessagesCommand<Attributes extends object = object> exte
 
 		const formattedOutput: SqsbReceiveMessagesCommandOutput<Attributes> = {
 			$metadatas: [$metadata],
-			messages: (messages || []).map(message => {
-				const { Body, MD5OfBody, MD5OfMessageAttributes, ...messageRest } = message;
+			messages: (messages || [])
+				.filter(
+					(
+						message
+					): message is Required<Pick<typeof message, 'MessageId' | 'ReceiptHandle' | 'Body' | 'MD5OfBody'>> &
+						Omit<typeof message, 'MessageId' | 'ReceiptHandle' | 'Body' | 'MD5OfBody'> =>
+						!!message.MessageId && !!message.ReceiptHandle && !!message.Body && !!message.MD5OfBody
+				)
+				.map(message => {
+					const { Body, MD5OfBody, MD5OfMessageAttributes, ...messageRest } = message;
 
-				const body = JSON.parse(Body!) as Attributes;
+					const body = JSON.parse(Body) as Attributes;
 
-				return {
-					body,
-					md5: MD5OfBody!,
-					md5OfMessageAttributes: MD5OfMessageAttributes,
-					...lowerCaseKeys(messageRest)
-				};
-			})
+					return {
+						body,
+						md5: MD5OfBody,
+						md5OfMessageAttributes: MD5OfMessageAttributes,
+						...lowerCaseKeys(messageRest)
+					};
+				})
 		};
 
 		return formattedOutput;
