@@ -8,7 +8,7 @@ import {
 export const receiveMessages = async <Attributes extends object = object>(
 	Queue: Queue<Attributes>,
 	count: number,
-	input?: Omit<SqsbReceiveMessagesCommandInput, 'maxNumberOfMessages'>
+	input?: Omit<SqsbReceiveMessagesCommandInput, 'queueUrl' | 'maxNumberOfMessages'>
 ): Promise<SqsbReceiveMessagesCommandOutput<Attributes>> =>
 	Queue.sqsxClient.send(
 		new SqsbReceiveMessagesCommand<Attributes>({

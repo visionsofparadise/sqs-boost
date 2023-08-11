@@ -140,6 +140,13 @@ export class SqsbSendMessagesCommand<Attributes extends object = object> extends
 	send = async (clientConfig: SqsBoostClientConfig) => {
 		const input = await this.handleInput(clientConfig);
 
+		if (!input.Entries || input.Entries.length === 0)
+			return {
+				$metadatas: [],
+				messages: [],
+				errors: []
+			};
+
 		const recurse = async (
 			remainingEntries: Array<SendMessageBatchRequestEntry>
 		): Promise<SqsbSendMessagesCommandOutput<Attributes>> => {
@@ -166,6 +173,6 @@ export class SqsbSendMessagesCommand<Attributes extends object = object> extends
 			};
 		};
 
-		return recurse(input.Entries!);
+		return recurse(input.Entries);
 	};
 }

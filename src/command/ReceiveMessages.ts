@@ -75,6 +75,12 @@ export class SqsbReceiveMessagesCommand<Attributes extends object = object> exte
 	send = async (clientConfig: SqsBoostClientConfig) => {
 		const input = await this.handleInput(clientConfig);
 
+		if (input.MaxNumberOfMessages && input.MaxNumberOfMessages < 1)
+			return {
+				$metadatas: [],
+				messages: []
+			};
+
 		const recurse = async (remainingCount: number): Promise<SqsbReceiveMessagesCommandOutput<Attributes>> => {
 			const currentCount = Math.min(remainingCount, 10);
 			const nextCount = remainingCount - currentCount;

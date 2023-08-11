@@ -1,6 +1,6 @@
 {
 	"name": "sqs-boost",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "Utilities for aws-sdk-v3 SQS client that provide better typescript support and APIs for scalable usage.",
 	"main": "./dist-cjs/index.js",
 	"module": "./dist-es/index.js",

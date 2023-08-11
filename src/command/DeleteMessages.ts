@@ -93,6 +93,12 @@ export class SqsbDeleteMessagesCommand extends SqsbCommand<
 	send = async (clientConfig: SqsBoostClientConfig) => {
 		const input = await this.handleInput(clientConfig);
 
+		if (!input.Entries || input.Entries.length === 0)
+			return {
+				$metadatas: [],
+				errors: []
+			};
+
 		const recurse = async (
 			remainingEntries: Array<DeleteMessageBatchRequestEntry>
 		): Promise<SqsbDeleteMessagesCommandOutput> => {
@@ -118,6 +124,6 @@ export class SqsbDeleteMessagesCommand extends SqsbCommand<
 			};
 		};
 
-		return recurse(input.Entries!);
+		return recurse(input.Entries);
 	};
 }
