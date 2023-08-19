@@ -1,6 +1,6 @@
 {
 	"name": "sqs-boost",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"description": "Utilities for aws-sdk-v3 SQS client that provide better typescript support and APIs for scalable usage.",
 	"main": "./dist-cjs/index.js",
 	"module": "./dist-es/index.js",
@@ -19,6 +19,9 @@
 		"patch": "npm version patch && npm publish",
 		"cdk": "cdk"
 	},
+	"dependencies": {
+		"object-key-casing": "^0.0.2"
+	},
 	"devDependencies": {
 		"@aws-sdk/client-sqs": "^3.370.0",
 		"@types/aws-lambda": "^8.10.108",
@@ -34,7 +37,6 @@
 		"sqs-mock": "^0.0.8",
 		"ts-jest": "^29.1.1",
 		"ts-node": "^10.9.1",
-		"ts-toolbelt": "^9.6.0",
 		"tslint": "^5.20.1",
 		"tslint-config-prettier": "^1.18.0",
 		"tslint-plugin-prettier": "^2.1.0",

@@ -1,7 +1,7 @@
 import { SQSEvent } from 'aws-lambda';
 import { Queue } from '../Queue';
 import { Message } from '@aws-sdk/client-sqs';
-import { lowerCaseKeys } from '../util/keyCapitalize';
+import { uncapitalizeKeys } from 'object-key-casing';
 
 export const convertLambdaMessages = <Attributes extends object = object>(
 	_: Queue<Attributes>,
@@ -21,6 +21,6 @@ export const convertMessages = <Attributes extends object = object>(_: Queue<Att
 			body: JSON.parse(Body!) as Attributes,
 			md5: MD5OfBody!,
 			md5OfMessageAttributes: MD5OfMessageAttributes,
-			...lowerCaseKeys(rest)
+			...uncapitalizeKeys(rest)
 		};
 	});

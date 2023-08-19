@@ -1,5 +1,5 @@
 import { SqsbCommand } from './Command';
-import { LowerCaseObjectKeys, lowerCaseKeys, upperCaseKeys } from '../util/keyCapitalize';
+import { UncapitalizeKeys, uncapitalizeKeys, capitalizeKeys } from 'object-key-casing';
 import { SqsBoostClientConfig } from '../Client';
 import {
 	DeleteMessageBatchCommandInput,
@@ -11,17 +11,17 @@ import {
 import { isNotNullish, randomString } from '../util/utils';
 
 export interface SqsbDeleteMessagesCommandInputMessage
-	extends LowerCaseObjectKeys<Omit<DeleteMessageBatchRequestEntry, 'Id'>> {}
+	extends UncapitalizeKeys<Omit<DeleteMessageBatchRequestEntry, 'Id'>> {}
 
 export interface SqsbDeleteMessagesCommandInput
-	extends LowerCaseObjectKeys<Omit<DeleteMessageBatchCommandInput, 'Entries'>> {
+	extends UncapitalizeKeys<Omit<DeleteMessageBatchCommandInput, 'Entries'>> {
 	messages: Array<string | SqsbDeleteMessagesCommandInputMessage>;
 }
 
 export interface SqsbDeleteMessagesCommandOutput
-	extends LowerCaseObjectKeys<Omit<DeleteMessageBatchCommandOutput, '$metadata' | 'Successful' | 'Failed'>> {
+	extends UncapitalizeKeys<Omit<DeleteMessageBatchCommandOutput, '$metadata' | 'Successful' | 'Failed'>> {
 	$metadatas: Array<DeleteMessageBatchCommandOutput['$metadata']>;
-	errors: Array<SqsbDeleteMessagesCommandInputMessage & LowerCaseObjectKeys<Omit<BatchResultErrorEntry, 'Id'>>>;
+	errors: Array<SqsbDeleteMessagesCommandInputMessage & UncapitalizeKeys<Omit<BatchResultErrorEntry, 'Id'>>>;
 }
 
 export class SqsbDeleteMessagesCommand extends SqsbCommand<
@@ -47,13 +47,13 @@ export class SqsbDeleteMessagesCommand extends SqsbCommand<
 		const { messages, ...rest } = this.input;
 
 		const entries = [...this.receiptHandleMap.entries()].map(([id, { receiptHandle }]) =>
-			upperCaseKeys({
+			capitalizeKeys({
 				id,
 				receiptHandle
 			})
 		);
 
-		const upperCaseInput = upperCaseKeys({ entries, ...rest });
+		const upperCaseInput = capitalizeKeys({ entries, ...rest });
 
 		return upperCaseInput;
 	};
@@ -62,7 +62,7 @@ export class SqsbDeleteMessagesCommand extends SqsbCommand<
 		output: DeleteMessageBatchCommandOutput,
 		{}: SqsBoostClientConfig
 	): Promise<SqsbDeleteMessagesCommandOutput> => {
-		const lowerCaseOutput = lowerCaseKeys(output);
+		const lowerCaseOutput = uncapitalizeKeys(output);
 
 		const { $metadata, successful, failed, ...rest } = lowerCaseOutput;
 
@@ -76,7 +76,7 @@ export class SqsbDeleteMessagesCommand extends SqsbCommand<
 
 				return {
 					...message,
-					...lowerCaseKeys(fail)
+					...uncapitalizeKeys(fail)
 				};
 			})
 			.filter(isNotNullish);

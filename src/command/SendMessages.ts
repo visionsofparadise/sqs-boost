@@ -1,5 +1,5 @@
 import { SqsbCommand } from './Command';
-import { LowerCaseObjectKeys, lowerCaseKeys, upperCaseKeys } from '../util/keyCapitalize';
+import { UncapitalizeKeys, uncapitalizeKeys, capitalizeKeys } from 'object-key-casing';
 import { SqsBoostClientConfig } from '../Client';
 import { isNotNullish, randomString } from '../util/utils';
 import {
@@ -13,7 +13,7 @@ import {
 import { pick } from '../util/pick';
 
 export interface SqsbSendMessagesCommandInputMessage<Attributes extends object = object>
-	extends LowerCaseObjectKeys<
+	extends UncapitalizeKeys<
 		Omit<SendMessageBatchRequestEntry, 'Id' | 'MessageBody' | 'MessageDeduplicationId' | 'MessageGroupId'>
 	> {
 	body: Attributes;
@@ -22,25 +22,23 @@ export interface SqsbSendMessagesCommandInputMessage<Attributes extends object =
 }
 
 export interface SqsbSendMessagesCommandInput<Attributes extends object = object>
-	extends LowerCaseObjectKeys<Omit<SendMessageBatchCommandInput, 'Entries'>> {
+	extends UncapitalizeKeys<Omit<SendMessageBatchCommandInput, 'Entries'>> {
 	messages: Array<SqsbSendMessagesCommandInputMessage<Attributes>>;
 }
 
 export interface SqsbSendMessagesCommandOutput<Attributes extends object = object>
-	extends LowerCaseObjectKeys<Omit<SendMessageBatchCommandOutput, '$metadata' | 'Successful' | 'Failed'>> {
+	extends UncapitalizeKeys<Omit<SendMessageBatchCommandOutput, '$metadata' | 'Successful' | 'Failed'>> {
 	$metadatas: Array<SendMessageBatchCommandOutput['$metadata']>;
 	messages: Array<
 		SqsbSendMessagesCommandInputMessage<Attributes> &
-			LowerCaseObjectKeys<
+			UncapitalizeKeys<
 				Omit<
 					SendMessageBatchResultEntry,
 					'Id' | 'MD5OfMessageBody' | 'MD5OfMessageAttributes' | 'MD5OfMessageSystemAttributes'
 				>
 			> & { md5: string; md5OfMessageAttributes?: string; md5OfMessageSystemAttributes?: string }
 	>;
-	errors: Array<
-		SqsbSendMessagesCommandInputMessage<Attributes> & LowerCaseObjectKeys<Omit<BatchResultErrorEntry, 'Id'>>
-	>;
+	errors: Array<SqsbSendMessagesCommandInputMessage<Attributes> & UncapitalizeKeys<Omit<BatchResultErrorEntry, 'Id'>>>;
 }
 
 export class SqsbSendMessagesCommand<Attributes extends object = object> extends SqsbCommand<
@@ -70,7 +68,7 @@ export class SqsbSendMessagesCommand<Attributes extends object = object> extends
 		const { messages, ...rest } = this.input;
 
 		const entries = [...this.messageMap.entries()].map(([id, { body, deduplicationId, groupId, ...messageRest }]) =>
-			upperCaseKeys({
+			capitalizeKeys({
 				id,
 				messageBody: JSON.stringify(body),
 				messageDeduplicationId: deduplicationId,
@@ -79,7 +77,7 @@ export class SqsbSendMessagesCommand<Attributes extends object = object> extends
 			})
 		);
 
-		const upperCaseInput = upperCaseKeys({ entries, ...rest });
+		const upperCaseInput = capitalizeKeys({ entries, ...rest });
 
 		return upperCaseInput;
 	};
@@ -88,7 +86,7 @@ export class SqsbSendMessagesCommand<Attributes extends object = object> extends
 		output: SendMessageBatchCommandOutput,
 		{}: SqsBoostClientConfig
 	): Promise<SqsbSendMessagesCommandOutput<Attributes>> => {
-		const lowerCaseOutput = lowerCaseKeys(output);
+		const lowerCaseOutput = uncapitalizeKeys(output);
 
 		const { $metadata, successful, failed, ...rest } = lowerCaseOutput;
 
@@ -107,7 +105,7 @@ export class SqsbSendMessagesCommand<Attributes extends object = object> extends
 					md5: MD5OfMessageBody,
 					md5OfMessageAttributes: MD5OfMessageAttributes,
 					md5OfMessageSystemAttributes: MD5OfMessageSystemAttributes,
-					...lowerCaseKeys(successRest)
+					...uncapitalizeKeys(successRest)
 				};
 			})
 			.filter(isNotNullish);
@@ -122,7 +120,7 @@ export class SqsbSendMessagesCommand<Attributes extends object = object> extends
 
 				return {
 					...message,
-					...lowerCaseKeys(fail)
+					...uncapitalizeKeys(fail)
 				};
 			})
 			.filter(isNotNullish);

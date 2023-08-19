@@ -1,5 +1,5 @@
 import { SqsbCommand } from './Command';
-import { LowerCaseObjectKeys, lowerCaseKeys, upperCaseKeys } from '../util/keyCapitalize';
+import { UncapitalizeKeys, uncapitalizeKeys, capitalizeKeys } from 'object-key-casing';
 import { SqsBoostClientConfig } from '../Client';
 import {
 	ReceiveMessageCommandInput,
@@ -8,13 +8,13 @@ import {
 	Message
 } from '@aws-sdk/client-sqs';
 
-export interface SqsbReceiveMessagesCommandInput extends LowerCaseObjectKeys<ReceiveMessageCommandInput> {}
+export interface SqsbReceiveMessagesCommandInput extends UncapitalizeKeys<ReceiveMessageCommandInput> {}
 
 export interface SqsbReceiveMessagesCommandOutput<Attributes extends object = object>
-	extends LowerCaseObjectKeys<Omit<ReceiveMessageCommandOutput, '$metadata' | 'Messages'>> {
+	extends UncapitalizeKeys<Omit<ReceiveMessageCommandOutput, '$metadata' | 'Messages'>> {
 	$metadatas: Array<ReceiveMessageCommandOutput['$metadata']>;
 	messages: Array<
-		LowerCaseObjectKeys<
+		UncapitalizeKeys<
 			Required<Pick<Message, 'MessageId' | 'ReceiptHandle'>> &
 				Omit<Message, 'MessageId' | 'ReceiptHandle' | 'Body' | 'MD5OfBody' | 'MD5OfMessageAttributes'>
 		> & {
@@ -35,13 +35,13 @@ export class SqsbReceiveMessagesCommand<Attributes extends object = object> exte
 		super(input);
 	}
 
-	handleInput = async ({}: SqsBoostClientConfig): Promise<ReceiveMessageCommandInput> => upperCaseKeys(this.input);
+	handleInput = async ({}: SqsBoostClientConfig): Promise<ReceiveMessageCommandInput> => capitalizeKeys(this.input);
 
 	handleOutput = async (
 		output: ReceiveMessageCommandOutput,
 		{}: SqsBoostClientConfig
 	): Promise<SqsbReceiveMessagesCommandOutput<Attributes>> => {
-		const lowerCaseOutput = lowerCaseKeys(output);
+		const lowerCaseOutput = uncapitalizeKeys(output);
 
 		const { $metadata, messages } = lowerCaseOutput;
 
@@ -64,7 +64,7 @@ export class SqsbReceiveMessagesCommand<Attributes extends object = object> exte
 						body,
 						md5: MD5OfBody,
 						md5OfMessageAttributes: MD5OfMessageAttributes,
-						...lowerCaseKeys(messageRest)
+						...uncapitalizeKeys(messageRest)
 					};
 				})
 		};
