@@ -25,10 +25,10 @@ it('receives 20 messages', async () => {
 
 	const result = await TestSqsbClient.send(
 		new SqsbReceiveMessagesCommand({
-			queueUrl: QUEUE_URL,
-			maxNumberOfMessages: 20
+			QueueUrl: QUEUE_URL,
+			MaxNumberOfMessages: 20
 		})
 	);
 
-	expect(result.messages.length).toBe(20);
+	expect(result.Messages.length).toBe(20);
 });

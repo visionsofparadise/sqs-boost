@@ -1,5 +1,4 @@
 import { SqsbCommand } from './Command';
-import { UncapitalizeKeys, uncapitalizeKeys, capitalizeKeys } from 'object-key-casing';
 import { SqsBoostClientConfig } from '../Client';
 import {
 	DeleteMessageBatchCommandInput,
@@ -10,18 +9,16 @@ import {
 } from '@aws-sdk/client-sqs';
 import { isNotNullish, randomString } from '../util/utils';
 
-export interface SqsbDeleteMessagesCommandInputMessage
-	extends UncapitalizeKeys<Omit<DeleteMessageBatchRequestEntry, 'Id'>> {}
+export interface SqsbDeleteMessagesCommandInputMessage extends Omit<DeleteMessageBatchRequestEntry, 'Id'> {}
 
-export interface SqsbDeleteMessagesCommandInput
-	extends UncapitalizeKeys<Omit<DeleteMessageBatchCommandInput, 'Entries'>> {
-	messages: Array<string | SqsbDeleteMessagesCommandInputMessage>;
+export interface SqsbDeleteMessagesCommandInput extends Omit<DeleteMessageBatchCommandInput, 'Entries'> {
+	Entries: Array<string | SqsbDeleteMessagesCommandInputMessage>;
 }
 
 export interface SqsbDeleteMessagesCommandOutput
-	extends UncapitalizeKeys<Omit<DeleteMessageBatchCommandOutput, '$metadata' | 'Successful' | 'Failed'>> {
+	extends Omit<DeleteMessageBatchCommandOutput, '$metadata' | 'Successful' | 'Failed'> {
 	$metadatas: Array<DeleteMessageBatchCommandOutput['$metadata']>;
-	errors: Array<SqsbDeleteMessagesCommandInputMessage & UncapitalizeKeys<Omit<BatchResultErrorEntry, 'Id'>>>;
+	Failed: Array<SqsbDeleteMessagesCommandInputMessage & Omit<BatchResultErrorEntry, 'Id'>>;
 }
 
 export class SqsbDeleteMessagesCommand extends SqsbCommand<
@@ -36,37 +33,28 @@ export class SqsbDeleteMessagesCommand extends SqsbCommand<
 		super(input);
 
 		this.receiptHandleMap = new Map(
-			this.input.messages.map(message => [
-				randomString(10),
-				typeof message === 'string' ? { receiptHandle: message } : message
-			])
+			this.input.Entries.map(entry => [randomString(10), typeof entry === 'string' ? { ReceiptHandle: entry } : entry])
 		);
 	}
 
 	handleInput = async ({}: SqsBoostClientConfig): Promise<DeleteMessageBatchCommandInput> => {
-		const { messages, ...rest } = this.input;
+		const { Entries: _, ...rest } = this.input;
 
-		const entries = [...this.receiptHandleMap.entries()].map(([id, { receiptHandle }]) =>
-			capitalizeKeys({
-				id,
-				receiptHandle
-			})
-		);
+		const Entries = [...this.receiptHandleMap.entries()].map(([Id, { ReceiptHandle }]) => ({
+			Id,
+			ReceiptHandle
+		}));
 
-		const upperCaseInput = capitalizeKeys({ entries, ...rest });
-
-		return upperCaseInput;
+		return { Entries, ...rest };
 	};
 
 	handleOutput = async (
 		output: DeleteMessageBatchCommandOutput,
 		{}: SqsBoostClientConfig
 	): Promise<SqsbDeleteMessagesCommandOutput> => {
-		const lowerCaseOutput = uncapitalizeKeys(output);
+		const { $metadata, Successful, Failed: UnlinkedFailed, ...rest } = output;
 
-		const { $metadata, successful, failed, ...rest } = lowerCaseOutput;
-
-		const errors = (failed || [])
+		const Failed = (UnlinkedFailed || [])
 			.map(fail => {
 				if (!fail.Id) return undefined;
 
@@ -76,14 +64,14 @@ export class SqsbDeleteMessagesCommand extends SqsbCommand<
 
 				return {
 					...message,
-					...uncapitalizeKeys(fail)
+					...fail
 				};
 			})
 			.filter(isNotNullish);
 
 		const formattedOutput: SqsbDeleteMessagesCommandOutput = {
 			$metadatas: [$metadata],
-			errors,
+			Failed,
 			...rest
 		};
 
@@ -96,7 +84,7 @@ export class SqsbDeleteMessagesCommand extends SqsbCommand<
 		if (!input.Entries || input.Entries.length === 0)
 			return {
 				$metadatas: [],
-				errors: []
+				Failed: []
 			};
 
 		const recurse = async (
@@ -120,7 +108,7 @@ export class SqsbDeleteMessagesCommand extends SqsbCommand<
 
 			return {
 				$metadatas: [...result.$metadatas, ...nextResult.$metadatas],
-				errors: [...result.errors, ...nextResult.errors]
+				Failed: [...result.Failed, ...nextResult.Failed]
 			};
 		};
 

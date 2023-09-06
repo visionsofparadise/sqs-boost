@@ -27,7 +27,7 @@ it('receives 20 messages', async () => {
 
 	await TestSqsbClient.send(
 		new SqsbPurgeQueueCommand({
-			queueUrl: PURGE_QUEUE_URL
+			QueueUrl: PURGE_QUEUE_URL
 		})
 	);
 

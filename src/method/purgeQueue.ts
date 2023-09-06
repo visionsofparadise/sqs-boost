@@ -6,6 +6,6 @@ export const purgeQueue = async <Attributes extends object = object>(
 ): Promise<SqsbPurgeQueueCommandOutput> =>
 	Queue.sqsxClient.send(
 		new SqsbPurgeQueueCommand({
-			queueUrl: Queue.url
+			QueueUrl: Queue.url
 		})
 	);

@@ -39,8 +39,8 @@ it('deletes 20 messages', async () => {
 
 	const result = await deleteMessages(TestQueue, [
 		...messages1.Messages!.map(m => m.ReceiptHandle!),
-		...messages2.Messages!.map(m => ({ receiptHandle: m.ReceiptHandle! }))
+		...messages2.Messages!.map(m => ({ ReceiptHandle: m.ReceiptHandle! }))
 	]);
 
-	expect(result.errors.length).toBe(0);
+	expect(result.Failed.length).toBe(0);
 });

@@ -25,5 +25,5 @@ it('receives 20 messages', async () => {
 
 	const result = await receiveMessages(TestQueue, 20);
 
-	expect(result.messages.length).toBe(20);
+	expect(result.Messages.length).toBe(20);
 });

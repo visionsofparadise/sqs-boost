@@ -1,5 +1,4 @@
 import { SqsbCommand } from './Command';
-import { UncapitalizeKeys, uncapitalizeKeys, capitalizeKeys } from 'object-key-casing';
 import { SqsBoostClientConfig } from '../Client';
 import {
 	ReceiveMessageCommandInput,
@@ -8,20 +7,16 @@ import {
 	Message
 } from '@aws-sdk/client-sqs';
 
-export interface SqsbReceiveMessagesCommandInput extends UncapitalizeKeys<ReceiveMessageCommandInput> {}
+export interface SqsbReceiveMessagesCommandInput extends ReceiveMessageCommandInput {}
 
 export interface SqsbReceiveMessagesCommandOutput<Attributes extends object = object>
-	extends UncapitalizeKeys<Omit<ReceiveMessageCommandOutput, '$metadata' | 'Messages'>> {
+	extends Omit<ReceiveMessageCommandOutput, '$metadata' | 'Messages'> {
 	$metadatas: Array<ReceiveMessageCommandOutput['$metadata']>;
-	messages: Array<
-		UncapitalizeKeys<
-			Required<Pick<Message, 'MessageId' | 'ReceiptHandle'>> &
-				Omit<Message, 'MessageId' | 'ReceiptHandle' | 'Body' | 'MD5OfBody' | 'MD5OfMessageAttributes'>
-		> & {
-			body: Attributes;
-			md5: string;
-			md5OfMessageAttributes?: string;
-		}
+	Messages: Array<
+		Required<Pick<Message, 'MessageId' | 'ReceiptHandle'>> &
+			Omit<Message, 'MessageId' | 'ReceiptHandle' | 'Body'> & {
+				Body: Attributes;
+			}
 	>;
 }
 
@@ -35,19 +30,17 @@ export class SqsbReceiveMessagesCommand<Attributes extends object = object> exte
 		super(input);
 	}
 
-	handleInput = async ({}: SqsBoostClientConfig): Promise<ReceiveMessageCommandInput> => capitalizeKeys(this.input);
+	handleInput = async ({}: SqsBoostClientConfig): Promise<ReceiveMessageCommandInput> => this.input;
 
 	handleOutput = async (
 		output: ReceiveMessageCommandOutput,
 		{}: SqsBoostClientConfig
 	): Promise<SqsbReceiveMessagesCommandOutput<Attributes>> => {
-		const lowerCaseOutput = uncapitalizeKeys(output);
+		const { $metadata, Messages } = output;
 
-		const { $metadata, messages } = lowerCaseOutput;
-
-		const formattedOutput: SqsbReceiveMessagesCommandOutput<Attributes> = {
+		const typedOutput: SqsbReceiveMessagesCommandOutput<Attributes> = {
 			$metadatas: [$metadata],
-			messages: (messages || [])
+			Messages: (Messages || [])
 				.filter(
 					(
 						message
@@ -56,20 +49,18 @@ export class SqsbReceiveMessagesCommand<Attributes extends object = object> exte
 						!!message.MessageId && !!message.ReceiptHandle && !!message.Body && !!message.MD5OfBody
 				)
 				.map(message => {
-					const { Body, MD5OfBody, MD5OfMessageAttributes, ...messageRest } = message;
+					const { Body, ...messageRest } = message;
 
-					const body = JSON.parse(Body) as Attributes;
+					const typedBody = JSON.parse(Body) as Attributes;
 
 					return {
-						body,
-						md5: MD5OfBody,
-						md5OfMessageAttributes: MD5OfMessageAttributes,
-						...uncapitalizeKeys(messageRest)
+						Body: typedBody,
+						...messageRest
 					};
 				})
 		};
 
-		return formattedOutput;
+		return typedOutput;
 	};
 
 	send = async (clientConfig: SqsBoostClientConfig) => {
@@ -78,7 +69,7 @@ export class SqsbReceiveMessagesCommand<Attributes extends object = object> exte
 		if (input.MaxNumberOfMessages && input.MaxNumberOfMessages < 1)
 			return {
 				$metadatas: [],
-				messages: []
+				Messages: []
 			};
 
 		const recurse = async (remainingCount: number): Promise<SqsbReceiveMessagesCommandOutput<Attributes>> => {
@@ -94,13 +85,13 @@ export class SqsbReceiveMessagesCommand<Attributes extends object = object> exte
 
 			const result = await this.handleOutput(output, clientConfig);
 
-			if (nextCount === 0 || result.messages.length < currentCount) return result;
+			if (nextCount === 0 || result.Messages.length < currentCount) return result;
 
 			const nextResult = await recurse(nextCount);
 
 			return {
 				$metadatas: [...result.$metadatas, ...nextResult.$metadatas],
-				messages: [...result.messages, ...nextResult.messages]
+				Messages: [...result.Messages, ...nextResult.Messages]
 			};
 		};
 

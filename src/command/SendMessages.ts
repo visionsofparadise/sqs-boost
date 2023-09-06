@@ -1,5 +1,4 @@
 import { SqsbCommand } from './Command';
-import { UncapitalizeKeys, uncapitalizeKeys, capitalizeKeys } from 'object-key-casing';
 import { SqsBoostClientConfig } from '../Client';
 import { isNotNullish, randomString } from '../util/utils';
 import {
@@ -13,32 +12,20 @@ import {
 import { pick } from '../util/pick';
 
 export interface SqsbSendMessagesCommandInputMessage<Attributes extends object = object>
-	extends UncapitalizeKeys<
-		Omit<SendMessageBatchRequestEntry, 'Id' | 'MessageBody' | 'MessageDeduplicationId' | 'MessageGroupId'>
-	> {
-	body: Attributes;
-	deduplicationId?: string;
-	groupId?: string;
+	extends Omit<SendMessageBatchRequestEntry, 'Id' | 'MessageBody'> {
+	MessageBody: Attributes;
 }
 
 export interface SqsbSendMessagesCommandInput<Attributes extends object = object>
-	extends UncapitalizeKeys<Omit<SendMessageBatchCommandInput, 'Entries'>> {
-	messages: Array<SqsbSendMessagesCommandInputMessage<Attributes>>;
+	extends Omit<SendMessageBatchCommandInput, 'Entries'> {
+	Entries: Array<SqsbSendMessagesCommandInputMessage<Attributes>>;
 }
 
 export interface SqsbSendMessagesCommandOutput<Attributes extends object = object>
-	extends UncapitalizeKeys<Omit<SendMessageBatchCommandOutput, '$metadata' | 'Successful' | 'Failed'>> {
+	extends Omit<SendMessageBatchCommandOutput, '$metadata' | 'Successful' | 'Failed'> {
 	$metadatas: Array<SendMessageBatchCommandOutput['$metadata']>;
-	messages: Array<
-		SqsbSendMessagesCommandInputMessage<Attributes> &
-			UncapitalizeKeys<
-				Omit<
-					SendMessageBatchResultEntry,
-					'Id' | 'MD5OfMessageBody' | 'MD5OfMessageAttributes' | 'MD5OfMessageSystemAttributes'
-				>
-			> & { md5: string; md5OfMessageAttributes?: string; md5OfMessageSystemAttributes?: string }
-	>;
-	errors: Array<SqsbSendMessagesCommandInputMessage<Attributes> & UncapitalizeKeys<Omit<BatchResultErrorEntry, 'Id'>>>;
+	Successful: Array<SqsbSendMessagesCommandInputMessage<Attributes> & Omit<SendMessageBatchResultEntry, 'Id'>>;
+	Failed: Array<SqsbSendMessagesCommandInputMessage<Attributes> & Omit<BatchResultErrorEntry, 'Id'>>;
 }
 
 export class SqsbSendMessagesCommand<Attributes extends object = object> extends SqsbCommand<
@@ -48,12 +35,12 @@ export class SqsbSendMessagesCommand<Attributes extends object = object> extends
 	SendMessageBatchCommandOutput
 > {
 	#messageKeys = [
-		'body',
-		'delaySeconds',
-		'messageAttributes',
-		'messageSystemAttributes',
-		'deduplicationId',
-		'groupId'
+		'MessageBody',
+		'DelaySeconds',
+		'MessageAttributes',
+		'MessageSystemAttributes',
+		'MessageDeduplicationId',
+		'MessageGroupId'
 	] as const;
 
 	messageMap: Map<string, SqsbSendMessagesCommandInputMessage<Attributes>>;
@@ -61,40 +48,32 @@ export class SqsbSendMessagesCommand<Attributes extends object = object> extends
 	constructor(input: SqsbSendMessagesCommandInput<Attributes>) {
 		super(input);
 
-		this.messageMap = new Map(this.input.messages.map(message => [randomString(10), pick(message, this.#messageKeys)]));
+		this.messageMap = new Map(this.input.Entries.map(message => [randomString(10), pick(message, this.#messageKeys)]));
 	}
 
 	handleInput = async ({}: SqsBoostClientConfig): Promise<SendMessageBatchCommandInput> => {
-		const { messages, ...rest } = this.input;
+		const { Entries: _, ...rest } = this.input;
 
-		const entries = [...this.messageMap.entries()].map(([id, { body, deduplicationId, groupId, ...messageRest }]) =>
-			capitalizeKeys({
-				id,
-				messageBody: JSON.stringify(body),
-				messageDeduplicationId: deduplicationId,
-				messageGroupId: groupId,
-				...messageRest
-			})
-		);
+		const Entries = [...this.messageMap.entries()].map(([Id, { MessageBody, ...messageRest }]) => ({
+			Id,
+			MessageBody: JSON.stringify(MessageBody),
+			...messageRest
+		}));
 
-		const upperCaseInput = capitalizeKeys({ entries, ...rest });
-
-		return upperCaseInput;
+		return { Entries, ...rest };
 	};
 
 	handleOutput = async (
 		output: SendMessageBatchCommandOutput,
 		{}: SqsBoostClientConfig
 	): Promise<SqsbSendMessagesCommandOutput<Attributes>> => {
-		const lowerCaseOutput = uncapitalizeKeys(output);
+		const { $metadata, Successful: RawSuccessful, Failed: RawFailed, ...rest } = output;
 
-		const { $metadata, successful, failed, ...rest } = lowerCaseOutput;
-
-		const messages = (successful || [])
+		const Successful = (RawSuccessful || [])
 			.map(success => {
-				const { Id, MD5OfMessageBody, MD5OfMessageAttributes, MD5OfMessageSystemAttributes, ...successRest } = success;
+				const { Id, ...successRest } = success;
 
-				if (!Id || !MD5OfMessageBody) return undefined;
+				if (!Id) return undefined;
 
 				const message = this.messageMap.get(Id);
 
@@ -102,15 +81,12 @@ export class SqsbSendMessagesCommand<Attributes extends object = object> extends
 
 				return {
 					...message,
-					md5: MD5OfMessageBody,
-					md5OfMessageAttributes: MD5OfMessageAttributes,
-					md5OfMessageSystemAttributes: MD5OfMessageSystemAttributes,
-					...uncapitalizeKeys(successRest)
+					...successRest
 				};
 			})
 			.filter(isNotNullish);
 
-		const errors = (failed || [])
+		const Failed = (RawFailed || [])
 			.map(fail => {
 				if (!fail.Id) return undefined;
 
@@ -120,15 +96,15 @@ export class SqsbSendMessagesCommand<Attributes extends object = object> extends
 
 				return {
 					...message,
-					...uncapitalizeKeys(fail)
+					...fail
 				};
 			})
 			.filter(isNotNullish);
 
 		const formattedOutput: SqsbSendMessagesCommandOutput<Attributes> = {
 			$metadatas: [$metadata],
-			messages,
-			errors,
+			Successful,
+			Failed,
 			...rest
 		};
 
@@ -141,8 +117,8 @@ export class SqsbSendMessagesCommand<Attributes extends object = object> extends
 		if (!input.Entries || input.Entries.length === 0)
 			return {
 				$metadatas: [],
-				messages: [],
-				errors: []
+				Successful: [],
+				Failed: []
 			};
 
 		const recurse = async (
@@ -166,8 +142,8 @@ export class SqsbSendMessagesCommand<Attributes extends object = object> extends
 
 			return {
 				$metadatas: [...result.$metadatas, ...nextResult.$metadatas],
-				messages: [...result.messages, ...nextResult.messages],
-				errors: [...result.errors, ...nextResult.errors]
+				Successful: [...result.Successful, ...nextResult.Successful],
+				Failed: [...result.Failed, ...nextResult.Failed]
 			};
 		};
 

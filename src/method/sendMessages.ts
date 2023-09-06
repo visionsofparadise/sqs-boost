@@ -10,11 +10,11 @@ export const sendMessages = async <Attributes extends object = object>(
 
 	return Queue.sqsxClient.send(
 		new SqsbSendMessagesCommand({
-			queueUrl: Queue.url,
-			messages: messages.map((body, index) => {
+			QueueUrl: Queue.url,
+			Entries: messages.map((MessageBody, index) => {
 				return {
-					body,
-					...(iterator ? iterator(body, index) : {})
+					MessageBody,
+					...(iterator ? iterator(MessageBody, index) : {})
 				};
 			})
 		})

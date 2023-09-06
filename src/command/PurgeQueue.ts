@@ -1,9 +1,8 @@
 import { SqsbCommand } from './Command';
-import { UncapitalizeKeys, capitalizeKeys } from 'object-key-casing';
 import { SqsBoostClientConfig } from '../Client';
 import { PurgeQueueCommandInput, PurgeQueueCommandOutput, PurgeQueueCommand } from '@aws-sdk/client-sqs';
 
-export interface SqsbPurgeQueueCommandInput extends UncapitalizeKeys<PurgeQueueCommandInput> {}
+export interface SqsbPurgeQueueCommandInput extends PurgeQueueCommandInput {}
 
 export interface SqsbPurgeQueueCommandOutput extends PurgeQueueCommandOutput {}
 
@@ -17,7 +16,7 @@ export class SqsbPurgeQueueCommand extends SqsbCommand<
 		super(input);
 	}
 
-	handleInput = async ({}: SqsBoostClientConfig): Promise<PurgeQueueCommandInput> => capitalizeKeys(this.input);
+	handleInput = async ({}: SqsBoostClientConfig): Promise<PurgeQueueCommandInput> => this.input;
 
 	handleOutput = async (
 		output: PurgeQueueCommandOutput,

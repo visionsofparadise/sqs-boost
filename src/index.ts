@@ -15,7 +15,6 @@ export {
 	SqsbSendMessagesCommandOutput
 } from './command/SendMessages';
 
-export { convertLambdaMessages, convertMessages } from './method/convertMessages';
 export { deleteMessages } from './method/deleteMessages';
 export { purgeQueue } from './method/purgeQueue';
 export { receiveMessages } from './method/receiveMessages';

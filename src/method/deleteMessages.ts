@@ -3,11 +3,11 @@ import { SqsbDeleteMessagesCommand, SqsbDeleteMessagesCommandOutput } from '../c
 
 export const deleteMessages = async <Attributes extends object = object>(
 	Queue: Queue<Attributes>,
-	receiptHandles: Array<string | { receiptHandle: string }>
+	receiptHandles: Array<string | { ReceiptHandle: string }>
 ): Promise<SqsbDeleteMessagesCommandOutput> =>
 	Queue.sqsxClient.send(
 		new SqsbDeleteMessagesCommand({
-			queueUrl: Queue.url,
-			messages: receiptHandles
+			QueueUrl: Queue.url,
+			Entries: receiptHandles
 		})
 	);

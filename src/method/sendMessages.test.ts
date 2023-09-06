@@ -9,8 +9,8 @@ it('sends a message', async () => {
 
 	const result = await sendMessages(TestQueue, [message]);
 
-	expect(result.messages.length).toBe(1);
-	expect(result.errors.length).toBe(0);
+	expect(result.Successful.length).toBe(1);
+	expect(result.Failed.length).toBe(0);
 });
 
 it('sends 20 messages', async () => {
@@ -20,6 +20,6 @@ it('sends 20 messages', async () => {
 
 	const result = await sendMessages(TestQueue, messages);
 
-	expect(result.messages.length).toBe(20);
-	expect(result.errors.length).toBe(0);
+	expect(result.Successful.length).toBe(20);
+	expect(result.Failed.length).toBe(0);
 });
